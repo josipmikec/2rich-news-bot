@@ -1,14 +1,26 @@
 const { Client, GatewayIntentBits } = require('discord.js');
+const http = require('http');
 
 const DISCORD_TOKEN  = process.env.DISCORD_TOKEN;
 const BOT_SECRET     = process.env.BOT_SECRET;
 const INGEST_URL     = process.env.INGEST_URL;
 const CHANNEL_ID     = '1251147993382391890';
+const PORT           = process.env.PORT || 3000;
 
 // Filter out messages containing these domains
 const BLOCKED_DOMAINS = [
     'financialjuice.com'
 ];
+
+// Keep-alive HTTP server so Render doesn't complain about ports
+http.createServer((req, res) => res.end('ok')).listen(PORT, () => {
+    console.log(`Keep-alive server listening on port ${PORT}`);
+});
+
+// Ping self every 10 minutes to prevent Render free tier sleep
+setInterval(() => {
+    http.get(`http://localhost:${PORT}`, () => {}).on('error', () => {});
+}, 10 * 60 * 1000);
 
 const client = new Client({
     intents: [
@@ -28,10 +40,8 @@ client.on('messageCreate', async (message) => {
 
     const content = message.content?.trim();
 
-    // Skip empty messages
     if (!content) return;
 
-    // Skip messages containing blocked domains
     const isBlocked = BLOCKED_DOMAINS.some(domain =>
         content.toLowerCase().includes(domain)
     );
