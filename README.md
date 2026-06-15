@@ -1,0 +1,1 @@
+# 2rich-news-bot
